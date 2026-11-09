@@ -57,9 +57,9 @@ export function createUI({ store, els, onChooseImage, onExport }) {
     btnDeform.classList.toggle('active', deforming);
     btnReset.hidden = !(selected && selected.quad);
     hint.textContent = deforming
-      ? '拖 4 个角自由变形 · 拖框内移动'
+      ? '拖角变形 · 拖框移动'
       : selected
-        ? `${index} 号 · 拖边单向拉伸 · 拖角自由变形`
+        ? `${index} 号 · 拖边拉伸 · 拖角缩放`
         : '选中色块后可改色';
     palette.classList.toggle('disabled', !selected);
     for (const swatch of palette.children) {
