@@ -48,6 +48,7 @@ Start-Process "C:\Program Files\Google\Chrome\Application\chrome.exe" `
 ```bash
 $env:CDP_PORT=9334
 node qa/visual-check.mjs   # 截图 + 拖动/拉伸/导出/撤销的真实事件回放
+node qa/photo-check.mjs    # 通过真实的文件选择框载入一张本地照片再导出
 node qa/pwa-check.mjs      # Service Worker 与 manifest
 ```
 
