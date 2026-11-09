@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/src/styles.css">
+<style>
+  body { background: #000; }
+  .stage { height: 100vh; }
+  .frame { outline: 1px solid #333; }
+</style>
+</head>
+<body>
+<main id="stage" class="stage">
+  <div id="frame" class="frame">
+    <img id="photo" alt="">
+    <svg id="shapes" class="shapes" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
+    <div id="overlay" class="overlay"></div>
+  </div>
+</main>
+<script type="module">
+  import { createView } from '/src/view.js';
+
+  const photo = `<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1200">
+    <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b9dcf5"/><stop offset="0.52" stop-color="#e8f4ff"/>
+    </linearGradient></defs>
+    <rect width="1600" height="1200" fill="url(#sky)"/>
+    <circle cx="360" cy="260" r="110" fill="#ffd166"/>
+    <ellipse cx="300" cy="900" rx="520" ry="300" fill="#8fae7a"/>
+    <ellipse cx="1350" cy="960" rx="560" ry="300" fill="#6f9160"/>
+    <rect y="960" width="1600" height="240" fill="#5d7a4d"/>
+    <text x="60" y="1140" font-family="sans-serif" font-size="48" fill="#e8f4ff" opacity="0.55">preview photo 1600×1200</text>
+  </svg>`;
+
+  const stage = document.getElementById('stage');
+  const view = createView({
+    stage,
+    frame: document.getElementById('frame'),
+    img: document.getElementById('photo'),
+    svg: document.getElementById('shapes'),
+    overlay: document.getElementById('overlay'),
+  });
+
+  const shapes = [
+    { id: 's_1', type: 'rect', x: 0.08, y: 0.18, w: 0.3, h: 0.3, color: '#FF3B30' },
+    { id: 's_2', type: 'ellipse', x: 0.55, y: 0.12, w: 0.28, h: 0.34, color: '#0A84FF' },
+    { id: 's_3', type: 'triangle', x: 0.34, y: 0.52, w: 0.32, h: 0.34, color: '#34C759' },
+  ];
+
+  await view.setImage(`data:image/svg+xml;utf8,${encodeURIComponent(photo)}`);
+  new ResizeObserver(() => view.render({ shapes, selectedId: 's_2' })).observe(stage);
+  view.render({ shapes, selectedId: 's_2' });
+</script>
+</body>
+</html>

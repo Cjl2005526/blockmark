@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#111112">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="色块标注">
+<title>色块标注</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="stylesheet" href="/src/styles.css">
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <button id="btn-image" class="icon-btn" aria-label="重新选图">‹</button>
+    <span id="count" class="count">0 个标注</span>
+    <button id="btn-export" class="primary-btn" disabled>导出</button>
+  </header>
+
+  <main id="stage" class="stage">
+    <div id="empty" class="empty">
+      <p class="empty-title">选一张要改的图</p>
+      <p class="empty-sub">框出需要 AI 修改的区域，导出标注图</p>
+      <button id="btn-pick" class="primary-btn big">选择图片</button>
+      <button id="btn-camera" class="ghost-btn">拍照</button>
+    </div>
+    <div id="frame" class="frame" hidden>
+      <img id="photo" alt="待标注的图片" draggable="false">
+      <svg id="shapes" class="shapes" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
+      <div id="overlay" class="overlay"></div>
+    </div>
+    <div id="spinner" class="spinner" hidden aria-label="加载中"></div>
+  </main>
+
+  <footer id="toolbar" class="toolbar" hidden>
+    <div class="row">
+      <div class="shape-picker" role="group" aria-label="添加形状">
+        <button class="shape-btn" data-add="rect" aria-label="添加矩形">▭</button>
+        <button class="shape-btn" data-add="ellipse" aria-label="添加圆形">◯</button>
+        <button class="shape-btn" data-add="triangle" aria-label="添加三角形">△</button>
+      </div>
+      <div class="actions">
+        <button id="btn-undo" class="icon-btn" aria-label="撤销" disabled>↶</button>
+        <button id="btn-redo" class="icon-btn" aria-label="重做" disabled>↷</button>
+        <button id="btn-delete" class="icon-btn danger" aria-label="删除" disabled>🗑</button>
+      </div>
+    </div>
+    <div class="row">
+      <div id="palette" class="palette" role="group" aria-label="色块颜色"></div>
+      <span id="hint" class="hint">选中色块后可改色</span>
+    </div>
+  </footer>
+</div>
+<input id="file" type="file" accept="image/*" hidden>
+<input id="file-camera" type="file" accept="image/*" capture="environment" hidden>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
