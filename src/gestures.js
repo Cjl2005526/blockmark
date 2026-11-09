@@ -1,17 +1,20 @@
-import { MIN_PX, moveRect, resizeRect, lockAspect } from './shapes.js';
+import {
+  MIN_PX, moveShape, resizeShape, lockAspect, withCorner, withBox, isSimpleQuad,
+} from './shapes.js';
 
 const DRAG_THRESHOLD = 4;
 
 export function attachGestures({ stage, frame, svg, overlay, store }) {
   let gesture = null;
 
-  function begin(event, mode, id, handle) {
+  function begin(event, mode, id, handle, corner = -1) {
     const shape = store.get().shapes.find((s) => s.id === id);
     if (!shape) return;
     gesture = {
       mode,
       id,
       handle,
+      corner,
       pointerId: event.pointerId,
       startX: event.clientX,
       startY: event.clientY,
@@ -39,7 +42,12 @@ export function attachGestures({ stage, frame, svg, overlay, store }) {
     if (!handle) return;
     event.stopPropagation();
     const id = store.get().selectedId;
-    if (id) begin(event, 'resize', id, handle.dataset.handle);
+    if (!id) return;
+    if (handle.classList.contains('corner')) {
+      begin(event, 'deform', id, null, Number(handle.dataset.handle.slice(1)));
+    } else {
+      begin(event, 'resize', id, handle.dataset.handle);
+    }
   });
 
   stage.addEventListener('pointerdown', (event) => {
@@ -57,13 +65,26 @@ export function attachGestures({ stage, frame, svg, overlay, store }) {
     const dx = dxPx / rect.width;
     const dy = dyPx / rect.height;
 
+    if (gesture.mode === 'deform') {
+      const point = [
+        (event.clientX - rect.left) / rect.width,
+        (event.clientY - rect.top) / rect.height,
+      ];
+      const next = withCorner(gesture.origin, gesture.corner, point);
+      if (next.w * rect.width < MIN_PX || next.h * rect.height < MIN_PX) return;
+      if (!isSimpleQuad(next.quad)) return;
+      store.updateShape(gesture.id, next);
+      return;
+    }
+
     let next;
     if (gesture.mode === 'move') {
-      next = moveRect(gesture.origin, dx, dy);
+      next = moveShape(gesture.origin, dx, dy);
     } else {
-      next = resizeRect(gesture.origin, gesture.handle, dx, dy, MIN_PX / rect.width, MIN_PX / rect.height);
+      next = resizeShape(gesture.origin, gesture.handle, dx, dy, MIN_PX / rect.width, MIN_PX / rect.height);
       if (event.shiftKey && gesture.handle.length === 2) {
-        next = lockAspect(next, gesture.origin, gesture.handle, rect.width, rect.height);
+        const locked = lockAspect(next, gesture.origin, gesture.handle, rect.width, rect.height);
+        next = withBox(gesture.origin, locked);
       }
     }
     store.updateShape(gesture.id, next);

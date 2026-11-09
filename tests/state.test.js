@@ -74,3 +74,48 @@ test('换图清空形状与历史', () => {
   assert.equal(s.canUndo(), false);
   assert.equal(s.get().image.url, 'blob:x');
 });
+
+test('进入变形模式会给形状补上四角数据', () => {
+  const s = createStore();
+  s.addShape('rect');
+  s.setDeformMode(true);
+  const shape = s.get().shapes[0];
+  assert.equal(shape.quad.length, 4);
+  assert.deepEqual(shape.quad[0], [0.35, 0.35]);
+  assert.equal(s.get().deformMode, true);
+});
+
+test('切换选中会退出变形模式', () => {
+  const s = createStore();
+  s.addShape('rect');
+  s.addShape('ellipse');
+  s.setDeformMode(true);
+  s.select('s_1');
+  assert.equal(s.get().deformMode, false);
+});
+
+test('角点拖动可以撤销回拖动前', () => {
+  const s = createStore();
+  s.addShape('rect');
+  s.setDeformMode(true);
+  const before = s.beginEdit();
+  s.updateShape('s_1', { x: 0.2, y: 0.2, w: 0.6, h: 0.5, quad: [[0.2, 0.2], [0.6, 0.2], [0.8, 0.7], [0.2, 0.5]] });
+  s.endEdit(before);
+  assert.equal(s.get().shapes[0].quad[2][0], 0.8);
+  s.undo();
+  assert.deepEqual(s.get().shapes[0].quad[2], [0.65, 0.65]);
+});
+
+test('复位清掉四边形且可撤销', () => {
+  const s = createStore();
+  s.addShape('rect');
+  s.setDeformMode(true);
+  const before = s.beginEdit();
+  s.updateShape('s_1', { x: 0.2, y: 0.2, w: 0.6, h: 0.5, quad: [[0.2, 0.2], [0.6, 0.2], [0.8, 0.7], [0.2, 0.5]] });
+  s.endEdit(before);
+  s.resetQuad();
+  assert.equal(s.get().shapes[0].quad, undefined);
+  assert.equal(s.get().deformMode, false);
+  s.undo();
+  assert.ok(s.get().shapes[0].quad);
+});

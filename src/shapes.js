@@ -92,3 +92,131 @@ export function textColorFor(hex) {
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
   return luminance > 0.6 ? '#1D1D1F' : '#FFFFFF';
 }
+
+export const ELLIPSE_STEPS = 64;
+
+const UNIT_ELLIPSE = Array.from({ length: ELLIPSE_STEPS }, (_, i) => {
+  const t = (i / ELLIPSE_STEPS) * Math.PI * 2;
+  return [0.5 + 0.5 * Math.cos(t), 0.5 + 0.5 * Math.sin(t)];
+});
+
+export function quadOf(shape) {
+  if (shape.quad) return shape.quad.map(([x, y]) => [x, y]);
+  const right = round6(shape.x + shape.w);
+  const bottom = round6(shape.y + shape.h);
+  return [
+    [shape.x, shape.y],
+    [right, shape.y],
+    [right, bottom],
+    [shape.x, bottom],
+  ];
+}
+
+export function bboxOfQuad(quad) {
+  const xs = quad.map((p) => p[0]);
+  const ys = quad.map((p) => p[1]);
+  const x = Math.min(...xs);
+  const y = Math.min(...ys);
+  return {
+    x: round6(x),
+    y: round6(y),
+    w: round6(Math.max(...xs) - x),
+    h: round6(Math.max(...ys) - y),
+  };
+}
+
+export function homographyOf(quad) {
+  const [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] = quad;
+  const dx1 = x1 - x2;
+  const dx2 = x3 - x2;
+  const dx3 = x0 - x1 + x2 - x3;
+  const dy1 = y1 - y2;
+  const dy2 = y3 - y2;
+  const dy3 = y0 - y1 + y2 - y3;
+  const den = dx1 * dy2 - dx2 * dy1;
+  if ((Math.abs(dx3) < 1e-12 && Math.abs(dy3) < 1e-12) || Math.abs(den) < 1e-12) {
+    return { a: x1 - x0, b: x3 - x0, c: x0, d: y1 - y0, e: y3 - y0, f: y0, g: 0, h: 0 };
+  }
+  const g = (dx3 * dy2 - dx2 * dy3) / den;
+  const h = (dx1 * dy3 - dx3 * dy1) / den;
+  return {
+    a: x1 - x0 + g * x1,
+    b: x3 - x0 + h * x3,
+    c: x0,
+    d: y1 - y0 + g * y1,
+    e: y3 - y0 + h * y3,
+    f: y0,
+    g,
+    h,
+  };
+}
+
+export function project(matrix, u, v) {
+  const den = matrix.g * u + matrix.h * v + 1;
+  return [
+    (matrix.a * u + matrix.b * v + matrix.c) / den,
+    (matrix.d * u + matrix.e * v + matrix.f) / den,
+  ];
+}
+
+export function moveShape(shape, dx, dy) {
+  const moved = moveRect(shape, dx, dy);
+  if (!shape.quad) return moved;
+  const ox = moved.x - shape.x;
+  const oy = moved.y - shape.y;
+  return {
+    ...moved,
+    quad: shape.quad.map(([x, y]) => [round6(x + ox), round6(y + oy)]),
+  };
+}
+
+export function withBox(shape, box) {
+  if (!shape.quad) return box;
+  const sx = box.w / shape.w;
+  const sy = box.h / shape.h;
+  return {
+    ...box,
+    quad: shape.quad.map(([x, y]) => [
+      round6(box.x + (x - shape.x) * sx),
+      round6(box.y + (y - shape.y) * sy),
+    ]),
+  };
+}
+
+export function resizeShape(shape, handle, dx, dy, minW, minH) {
+  return withBox(shape, resizeRect(shape, handle, dx, dy, minW, minH));
+}
+
+export function withCorner(shape, index, point) {
+  const quad = quadOf(shape);
+  quad[index] = [round6(clamp(point[0], 0, 1)), round6(clamp(point[1], 0, 1))];
+  return { ...shape, ...bboxOfQuad(quad), quad };
+}
+
+function cross(ax, ay, bx, by, cx, cy) {
+  return (bx - ax) * (cy - ay) - (by - ay) * (cx - ax);
+}
+
+function segmentsCross(a, b, c, d) {
+  const d1 = cross(c[0], c[1], d[0], d[1], a[0], a[1]);
+  const d2 = cross(c[0], c[1], d[0], d[1], b[0], b[1]);
+  const d3 = cross(a[0], a[1], b[0], b[1], c[0], c[1]);
+  const d4 = cross(a[0], a[1], b[0], b[1], d[0], d[1]);
+  return ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0));
+}
+
+export function isSimpleQuad(quad) {
+  if (segmentsCross(quad[0], quad[1], quad[2], quad[3])) return false;
+  if (segmentsCross(quad[1], quad[2], quad[3], quad[0])) return false;
+  return true;
+}
+
+export function deformedOutline(shape) {
+  if (!shape.quad) return null;
+  const matrix = homographyOf(shape.quad);
+  if (shape.type === 'rect') return shape.quad.map(([x, y]) => [x, y]);
+  if (shape.type === 'triangle') {
+    return [[0.5, 0], [1, 1], [0, 1]].map(([u, v]) => project(matrix, u, v));
+  }
+  return UNIT_ELLIPSE.map(([u, v]) => project(matrix, u, v));
+}

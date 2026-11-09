@@ -21,6 +21,8 @@ const els = {
   undo: $('btn-undo'),
   redo: $('btn-redo'),
   del: $('btn-delete'),
+  btnDeform: $('btn-deform'),
+  btnReset: $('btn-reset'),
   exportBtn: $('btn-export'),
   imageBtn: $('btn-image'),
   pickBtn: $('btn-pick'),

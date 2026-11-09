@@ -1974,6 +1974,26 @@ git commit -m "docs: README 与验收记录"
    - `qa/pwa-check.mjs` 校验 SW 与 manifest
 7. **实测结果**：31 个单元测试全绿；CDP 回放中拖动 +30px/+40px → x +0.0769 / y +0.1368，东边拉伸 +25px → 宽度 +0.0641，撤销恢复原值；导出 1600×1200 PNG（206 KB）；SW 激活且缓存 13 个资源。
 
+---
+
+## 追加需求：四点透视（2026-11-10）
+
+用户提出要"平行四边形拉伸 / 透视效果"，确认选 B（四点透视，天然包含斜切后的平行四边形）。
+
+**模型**：形状可选带 `quad`（四个归一化角点，TL→TR→BR→BL）；有 `quad` 时形状是单位正方形经单应变换的结果，`bbox` 始终等于四点包围盒。
+
+| 文件 | 改动 |
+| --- | --- |
+| `src/shapes.js` | 新增 `quadOf` / `bboxOfQuad` / `homographyOf` / `project` / `moveShape` / `resizeShape` / `withBox` / `withCorner` / `isSimpleQuad` / `deformedOutline`（圆按 64 点采样映射） |
+| `src/state.js` | 新增 `deformMode` / `setDeformMode` / `resetQuad`；`updateShape` 接受 `quad`；切换选中、撤销、换图都会退出变形模式 |
+| `src/view.js` | 有 `quad` 用 polygon 渲染；变形模式画虚线四边形 + 4 个角点 |
+| `src/gestures.js` | 新增 `deform` 手势：绝对坐标、夹在图片内、最小尺寸与"蝴蝶结"自交保护 |
+| `src/export.js` | 有 `quad` 时按映射后的多边形路径绘制 |
+| `index.html` / `styles.css` / `src/ui.js` | 「变形 / 完成」chip、「复位」chip、提示文案 |
+| `tests/quad.test.js` + `tests/state.test.js` | 新增 11 + 4 个测试，总数 46 |
+
+**实测**：把椭圆右下角向内拖 (-20, -30) px → 角点从 (0.9710, 0.5968) 变成 (0.9197, 0.4942)，与 20/390、30/292.5 完全一致；导出 1600×1200 PNG 中椭圆已是倾斜的四边形投影；「复位」后 `quad` 消失且可撤销。
+
 ## 与设计文档的对应关系
 
 | 设计文档章节 | 实现位置 |

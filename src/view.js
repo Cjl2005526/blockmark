@@ -1,11 +1,13 @@
-import { containRect, shapeGeometry, hexToRgba, textColorFor } from './shapes.js';
+import {
+  containRect, shapeGeometry, hexToRgba, textColorFor, quadOf, deformedOutline,
+} from './shapes.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const HANDLES = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
 
 export function createView({ stage, frame, img, svg, overlay }) {
   let display = { w: 1, h: 1 };
-  let lastState = { shapes: [], selectedId: null };
+  let lastState = { shapes: [], selectedId: null, deformMode: false };
 
   function fit() {
     if (!img.naturalWidth) return;
@@ -32,7 +34,25 @@ export function createView({ stage, frame, img, svg, overlay }) {
     });
   }
 
+  function styleShape(el, shape) {
+    el.setAttribute('fill', hexToRgba(shape.color, 0.36));
+    el.setAttribute('stroke', shape.color);
+    el.setAttribute('stroke-width', '2');
+    el.setAttribute('stroke-linejoin', 'round');
+    el.setAttribute('vector-effect', 'non-scaling-stroke');
+    el.setAttribute('class', 'shape');
+    el.dataset.id = shape.id;
+  }
+
   function shapeElement(shape) {
+    const outline = deformedOutline(shape);
+    if (outline) {
+      const polygon = document.createElementNS(SVG_NS, 'polygon');
+      polygon.setAttribute('points', outline.map(([x, y]) => `${x * 100},${y * 100}`).join(' '));
+      styleShape(polygon, shape);
+      return polygon;
+    }
+
     const g = shapeGeometry(shape);
     const el = document.createElementNS(SVG_NS, g.kind === 'triangle' ? 'polygon' : g.kind);
     if (g.kind === 'rect') {
@@ -48,13 +68,7 @@ export function createView({ stage, frame, img, svg, overlay }) {
     } else {
       el.setAttribute('points', g.points.map(([x, y]) => `${x},${y}`).join(' '));
     }
-    el.setAttribute('fill', hexToRgba(shape.color, 0.36));
-    el.setAttribute('stroke', shape.color);
-    el.setAttribute('stroke-width', '2');
-    el.setAttribute('stroke-linejoin', 'round');
-    el.setAttribute('vector-effect', 'non-scaling-stroke');
-    el.setAttribute('class', 'shape');
-    el.dataset.id = shape.id;
+    styleShape(el, shape);
     return el;
   }
 
@@ -72,6 +86,28 @@ export function createView({ stage, frame, img, svg, overlay }) {
       el.style.left = `${Math.min(Math.max(shape.x * display.w, r), maxX)}px`;
       el.style.top = `${Math.min(Math.max(shape.y * display.h, r), maxY)}px`;
       overlay.append(el);
+    });
+  }
+
+  function renderDeformSelection(shape) {
+    const quad = quadOf(shape);
+    const outline = document.createElementNS(SVG_NS, 'polygon');
+    outline.setAttribute('points', quad.map(([x, y]) => `${x * 100},${y * 100}`).join(' '));
+    outline.setAttribute('fill', 'none');
+    outline.setAttribute('stroke', 'rgba(255,255,255,.92)');
+    outline.setAttribute('stroke-width', '1.5');
+    outline.setAttribute('stroke-dasharray', '6 5');
+    outline.setAttribute('vector-effect', 'non-scaling-stroke');
+    outline.setAttribute('class', 'sel-outline');
+    svg.append(outline);
+
+    quad.forEach(([x, y], index) => {
+      const handle = document.createElement('div');
+      handle.className = 'handle corner';
+      handle.style.left = `${x * 100}%`;
+      handle.style.top = `${y * 100}%`;
+      handle.dataset.handle = `c${index}`;
+      overlay.append(handle);
     });
   }
 
@@ -103,7 +139,8 @@ export function createView({ stage, frame, img, svg, overlay }) {
     svg.replaceChildren(...state.shapes.map(shapeElement));
     overlay.replaceChildren();
     renderBadges(state.shapes, state.selectedId);
-    renderSelection(selected);
+    if (selected && state.deformMode) renderDeformSelection(selected);
+    else renderSelection(selected);
   }
 
   new ResizeObserver(() => {

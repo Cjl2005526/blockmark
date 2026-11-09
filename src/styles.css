@@ -91,6 +91,14 @@ button:disabled { opacity: 0.3; cursor: default; }
   touch-action: none;
 }
 .handle::after { content: ""; position: absolute; inset: -16px; }
+.handle.corner {
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 4px;
+}
+.handle.corner::after { inset: -15px; }
+.sel-outline { filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.55)); }
 
 .badge {
   position: absolute;
@@ -131,7 +139,8 @@ button:disabled { opacity: 0.3; cursor: default; }
 }
 .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .row + .row { margin-top: 8px; }
-.shape-picker, .actions { display: flex; gap: 6px; }
+.shape-picker, .actions, .left-group { display: flex; align-items: center; gap: 6px; }
+.left-group { min-width: 0; }
 .shape-btn {
   width: 44px;
   height: 34px;
@@ -142,7 +151,19 @@ button:disabled { opacity: 0.3; cursor: default; }
 }
 .shape-btn:active { background: #3a3a3c; }
 
-.palette { display: flex; gap: 8px; align-items: center; }
+.chip {
+  height: 28px;
+  padding: 0 11px;
+  border-radius: 14px;
+  background: var(--panel-2);
+  color: var(--text);
+  font-size: 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.chip.active { background: var(--accent); color: #fff; }
+
+.palette { display: flex; gap: 8px; align-items: center; min-width: 0; }
 .palette.disabled { opacity: 0.35; pointer-events: none; }
 .swatch {
   width: 22px;
@@ -152,7 +173,15 @@ button:disabled { opacity: 0.3; cursor: default; }
 }
 .swatch.light { box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25); }
 .swatch.active { box-shadow: 0 0 0 2.5px var(--panel), 0 0 0 4px currentColor; }
-.hint { font-size: 11px; color: var(--muted); }
+.hint {
+  font-size: 11px;
+  color: var(--muted);
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-align: right;
+}
 
 .toast {
   position: fixed;

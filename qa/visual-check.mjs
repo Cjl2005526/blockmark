@@ -177,9 +177,48 @@ const main = async () => {
   })()`);
   await cdp.shot('03-after-drag.png');
 
+  await cdp.eval(`document.getElementById('btn-deform').click()`);
+  await sleep(250);
+  const deformed = await cdp.eval(`(() => {
+    const s = window.__blockmark.store.get().shapes.find(x => x.type === 'ellipse');
+    const r = document.getElementById('frame').getBoundingClientRect();
+    return { quad: s.quad, frame: { x: r.x, y: r.y, w: r.width, h: r.height }, deformMode: window.__blockmark.store.get().deformMode };
+  })()`);
+  const corner = deformed.quad[2];
+  const from = {
+    x: deformed.frame.x + corner[0] * deformed.frame.w,
+    y: deformed.frame.y + corner[1] * deformed.frame.h,
+  };
+  await cdp.drag(from, { x: from.x - 20, y: from.y - 30 });
+  report.deform = await cdp.eval(`(() => {
+    const s = window.__blockmark.store.get().shapes.find(x => x.type === 'ellipse');
+    return { quad: s.quad, box: { x: s.x, y: s.y, w: s.w, h: s.h } };
+  })()`);
+  await cdp.shot('04-deform.png');
+
   report.export = await cdp.eval(`(async () => {
     const out = await window.__blockmark.exportPng();
     return { size: out.blob.size, W: out.W, H: out.H, scaled: out.scaled };
+  })()`);
+
+  await cdp.eval(`(async () => {
+    const out = await window.__blockmark.exportPng();
+    const img = document.createElement('img');
+    img.id = 'export-preview';
+    img.src = URL.createObjectURL(out.blob);
+    img.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;object-fit:contain;background:#000;z-index:99';
+    document.body.append(img);
+    await img.decode();
+    return true;
+  })()`);
+  await sleep(300);
+  await cdp.shot('05-export.png');
+  await cdp.eval(`document.getElementById('export-preview').remove()`);
+
+  report.reset = await cdp.eval(`(() => {
+    document.getElementById('btn-reset').click();
+    const s = window.__blockmark.store.get().shapes.find(x => x.type === 'ellipse');
+    return { hasQuad: !!s.quad, deformMode: window.__blockmark.store.get().deformMode };
   })()`);
 
   report.undo = await cdp.eval(`(() => {

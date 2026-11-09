@@ -1,4 +1,4 @@
-import { shapeGeometry, hexToRgba, textColorFor } from './shapes.js';
+import { shapeGeometry, hexToRgba, textColorFor, deformedOutline } from './shapes.js';
 
 export const MAX_EDGE = 4096;
 export const MAX_AREA = 16777216;
@@ -55,7 +55,19 @@ export function drawShapes(ctx, shapes, W, H) {
   if (!shapes.length) return;
   const { stroke, badgeR } = exportGeometry(W, H);
   shapes.forEach((shape, index) => {
-    tracePath(ctx, shape, W, H);
+    const outline = deformedOutline(shape);
+    if (outline) {
+      ctx.beginPath();
+      outline.forEach(([u, v], i) => {
+        const x = u * W;
+        const y = v * H;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.closePath();
+    } else {
+      tracePath(ctx, shape, W, H);
+    }
     ctx.fillStyle = hexToRgba(shape.color, FILL_ALPHA);
     ctx.fill();
     ctx.lineWidth = stroke + 2;

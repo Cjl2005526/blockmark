@@ -44,13 +44,17 @@
         <button class="shape-btn" data-add="triangle" aria-label="添加三角形">△</button>
       </div>
       <div class="actions">
+        <button id="btn-deform" class="chip" aria-label="自由变形" disabled>变形</button>
         <button id="btn-undo" class="icon-btn" aria-label="撤销" disabled>↶</button>
         <button id="btn-redo" class="icon-btn" aria-label="重做" disabled>↷</button>
         <button id="btn-delete" class="icon-btn danger" aria-label="删除" disabled>🗑</button>
       </div>
     </div>
     <div class="row">
-      <div id="palette" class="palette" role="group" aria-label="色块颜色"></div>
+      <div class="left-group">
+        <div id="palette" class="palette" role="group" aria-label="色块颜色"></div>
+        <button id="btn-reset" class="chip" hidden>复位</button>
+      </div>
       <span id="hint" class="hint">选中色块后可改色</span>
     </div>
   </footer>
