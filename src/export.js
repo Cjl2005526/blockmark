@@ -1,4 +1,6 @@
-import { shapeGeometry, hexToRgba, textColorFor, deformedOutline } from './shapes.js';
+import {
+  shapeGeometry, hexToRgba, textColorFor, deformedOutline, BADGE_ALPHA, BADGE_TEXT_ALPHA,
+} from './shapes.js';
 
 export const MAX_EDGE = 4096;
 export const MAX_AREA = 16777216;
@@ -80,9 +82,9 @@ export function drawShapes(ctx, shapes, W, H) {
     const { cx, cy } = badgePosition(shape, W, H, badgeR);
     ctx.beginPath();
     ctx.arc(cx, cy, badgeR, 0, Math.PI * 2);
-    ctx.fillStyle = shape.color;
+    ctx.fillStyle = hexToRgba(shape.color, BADGE_ALPHA);
     ctx.fill();
-    ctx.fillStyle = textColorFor(shape.color);
+    ctx.fillStyle = textColorFor(shape.color, BADGE_TEXT_ALPHA);
     ctx.font = `700 ${badgeR * 1.1}px -apple-system, "PingFang SC", system-ui, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';

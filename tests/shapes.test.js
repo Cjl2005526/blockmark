@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   PALETTE, createShape, moveRect, resizeRect, lockAspect,
-  containRect, shapeGeometry, hexToRgba, textColorFor,
+  containRect, shapeGeometry, hexToRgba, textColorFor, BADGE_ALPHA, BADGE_TEXT_ALPHA,
 } from '../src/shapes.js';
 
 const rect = { type: 'rect', x: 0.2, y: 0.2, w: 0.4, h: 0.4, color: '#FF3B30' };
@@ -91,4 +91,11 @@ test('颜色工具', () => {
   assert.equal(textColorFor('#0A84FF'), '#FFFFFF');
   assert.equal(textColorFor('#FFFFFF'), '#1D1D1F');
   assert.equal(textColorFor('#FF9F0A'), '#1D1D1F');
+});
+
+test('编号徽标也是半透明的', () => {
+  assert.equal(BADGE_ALPHA, 0.7);
+  assert.equal(hexToRgba('#FF3B30', BADGE_ALPHA), 'rgba(255,59,48,0.7)');
+  assert.equal(textColorFor('#0A84FF', BADGE_TEXT_ALPHA), 'rgba(255,255,255,0.95)');
+  assert.equal(textColorFor('#FFFFFF', BADGE_TEXT_ALPHA), 'rgba(29,29,31,0.95)');
 });

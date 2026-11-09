@@ -2,6 +2,8 @@ export const PALETTE = ['#FF3B30', '#0A84FF', '#34C759', '#FF9F0A', '#BF5AF2', '
 export const SHAPE_TYPES = ['rect', 'ellipse', 'triangle'];
 export const DEFAULT_SIZE = 0.3;
 export const MIN_PX = 28;
+export const BADGE_ALPHA = 0.7;
+export const BADGE_TEXT_ALPHA = 0.95;
 
 const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
 const round6 = (v) => Math.round(v * 1e6) / 1e6;
@@ -87,10 +89,13 @@ export function hexToRgba(hex, alpha) {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
-export function textColorFor(hex) {
+export function textColorFor(hex, alpha = 1) {
   const { r, g, b } = hexToRgb(hex);
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.6 ? '#1D1D1F' : '#FFFFFF';
+  const base = luminance > 0.6 ? '#1D1D1F' : '#FFFFFF';
+  if (alpha >= 1) return base;
+  const rgb = hexToRgb(base);
+  return `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha})`;
 }
 
 export const ELLIPSE_STEPS = 64;

@@ -1,5 +1,6 @@
 import {
   containRect, shapeGeometry, hexToRgba, textColorFor, quadOf, deformedOutline, auxPoint,
+  BADGE_ALPHA, BADGE_TEXT_ALPHA,
 } from './shapes.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -79,8 +80,8 @@ export function createView({ stage, frame, img, svg, overlay }) {
       const el = document.createElement('span');
       el.className = 'badge';
       el.textContent = String(index + 1);
-      el.style.background = shape.color;
-      el.style.color = textColorFor(shape.color);
+      el.style.background = hexToRgba(shape.color, BADGE_ALPHA);
+      el.style.color = textColorFor(shape.color, BADGE_TEXT_ALPHA);
       const maxX = Math.max(r, display.w - r);
       const maxY = Math.max(r, display.h - r);
       el.style.left = `${Math.min(Math.max(shape.x * display.w, r), maxX)}px`;
