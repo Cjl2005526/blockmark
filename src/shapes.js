@@ -220,3 +220,27 @@ export function deformedOutline(shape) {
   }
   return UNIT_ELLIPSE.map(([u, v]) => project(matrix, u, v));
 }
+
+export function auxPoint(corner, center, box, outward = 48, inward = 36) {
+  const dx = corner[0] - center[0];
+  const dy = corner[1] - center[1];
+  const length = Math.hypot(dx, dy) || 1;
+  const ux = dx / length;
+  const uy = dy / length;
+  const margin = 8;
+  const inside = (x, y) => x >= box.minX + margin
+    && x <= box.maxX - margin
+    && y >= box.minY + margin
+    && y <= box.maxY - margin;
+
+  let x = corner[0] + ux * outward;
+  let y = corner[1] + uy * outward;
+  if (!inside(x, y)) {
+    x = corner[0] - ux * inward;
+    y = corner[1] - uy * inward;
+  }
+  return [
+    clamp(x, box.minX + 2, box.maxX - 2),
+    clamp(y, box.minY + 2, box.maxY - 2),
+  ];
+}

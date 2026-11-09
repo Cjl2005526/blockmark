@@ -100,6 +100,16 @@ button:disabled { opacity: 0.3; cursor: default; }
 .handle.corner::after { inset: -15px; }
 .sel-outline { filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.55)); }
 
+.handle.touch {
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.94);
+}
+.handle.touch.corner { border-radius: 50%; }
+.handle-line { stroke: rgba(255, 255, 255, 0.55); stroke-width: 1; }
+
 .badge {
   position: absolute;
   width: 17px;

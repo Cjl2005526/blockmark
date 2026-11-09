@@ -43,7 +43,7 @@ export function attachGestures({ stage, frame, svg, overlay, store }) {
     event.stopPropagation();
     const id = store.get().selectedId;
     if (!id) return;
-    if (handle.classList.contains('corner')) {
+    if (handle.classList.contains('corner') || handle.dataset.handle.startsWith('c')) {
       begin(event, 'deform', id, null, Number(handle.dataset.handle.slice(1)));
     } else {
       begin(event, 'resize', id, handle.dataset.handle);
@@ -66,10 +66,8 @@ export function attachGestures({ stage, frame, svg, overlay, store }) {
     const dy = dyPx / rect.height;
 
     if (gesture.mode === 'deform') {
-      const point = [
-        (event.clientX - rect.left) / rect.width,
-        (event.clientY - rect.top) / rect.height,
-      ];
+      const origin = gesture.origin.quad[gesture.corner];
+      const point = [origin[0] + dx, origin[1] + dy];
       const next = withCorner(gesture.origin, gesture.corner, point);
       if (next.w * rect.width < MIN_PX || next.h * rect.height < MIN_PX) return;
       if (!isSimpleQuad(next.quad)) return;

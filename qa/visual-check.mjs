@@ -127,6 +127,7 @@ const main = async () => {
     deviceScaleFactor: 2,
     mobile: true,
   });
+  await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
 
   const report = {};
 
@@ -164,10 +165,11 @@ const main = async () => {
     const r = document.getElementById('frame').getBoundingClientRect();
     return { shape: { ...s }, frame: { x: r.x, y: r.y, w: r.width, h: r.height } };
   })()`);
-  const east = {
-    x: moved.frame.x + (moved.shape.x + moved.shape.w) * moved.frame.w,
-    y: moved.frame.y + (moved.shape.y + moved.shape.h / 2) * moved.frame.h,
-  };
+  const east = await cdp.eval(`(() => {
+    const el = document.querySelector('.handle[data-handle="e"]');
+    const r = el.getBoundingClientRect();
+    return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+  })()`);
   await cdp.drag(east, { x: east.x + 25, y: east.y });
 
   report.afterMove = moved.shape;
@@ -184,11 +186,11 @@ const main = async () => {
     const r = document.getElementById('frame').getBoundingClientRect();
     return { quad: s.quad, frame: { x: r.x, y: r.y, w: r.width, h: r.height }, deformMode: window.__blockmark.store.get().deformMode };
   })()`);
-  const corner = deformed.quad[2];
-  const from = {
-    x: deformed.frame.x + corner[0] * deformed.frame.w,
-    y: deformed.frame.y + corner[1] * deformed.frame.h,
-  };
+  const from = await cdp.eval(`(() => {
+    const el = document.querySelector('.handle[data-handle="c2"]');
+    const r = el.getBoundingClientRect();
+    return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+  })()`);
   await cdp.drag(from, { x: from.x - 20, y: from.y - 30 });
   report.deform = await cdp.eval(`(() => {
     const s = window.__blockmark.store.get().shapes.find(x => x.type === 'ellipse');

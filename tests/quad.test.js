@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   homographyOf, project, quadOf, bboxOfQuad, moveShape, resizeShape,
-  withCorner, isSimpleQuad, deformedOutline,
+  withCorner, isSimpleQuad, deformedOutline, auxPoint,
 } from '../src/shapes.js';
 
 const near = (a, b, eps = 1e-9) => Math.abs(a - b) < eps;
@@ -97,4 +97,24 @@ test('变形后的圆和三角按四边形重采样', () => {
 
 test('没有 quad 时不走重采样', () => {
   assert.equal(deformedOutline(shape), null);
+});
+
+test('辅助点默认浮在角的外侧', () => {
+  const box = { minX: 0, minY: 0, maxX: 400, maxY: 400 };
+  const [x, y] = auxPoint([100, 100], [200, 200], box);
+  assert.ok(x < 100 && y < 100, '应该往左上外侧走');
+  assert.ok(Math.hypot(x - 100, y - 100) > 40);
+});
+
+test('靠边放不下时辅助点翻到内侧', () => {
+  const box = { minX: 0, minY: 0, maxX: 400, maxY: 400 };
+  const [x, y] = auxPoint([10, 10], [100, 100], box);
+  assert.ok(x > 10 && y > 10, '应该翻到内侧');
+});
+
+test('辅助点始终落在可视范围内', () => {
+  const box = { minX: 0, minY: 0, maxX: 100, maxY: 100 };
+  const [x, y] = auxPoint([5, 5], [50, 50], box, 200, 36);
+  assert.ok(x >= 0 && x <= 100);
+  assert.ok(y >= 0 && y <= 100);
 });

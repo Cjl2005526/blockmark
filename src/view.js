@@ -1,5 +1,5 @@
 import {
-  containRect, shapeGeometry, hexToRgba, textColorFor, quadOf, deformedOutline,
+  containRect, shapeGeometry, hexToRgba, textColorFor, quadOf, deformedOutline, auxPoint,
 } from './shapes.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -89,6 +89,51 @@ export function createView({ stage, frame, img, svg, overlay }) {
     });
   }
 
+  function auxBox() {
+    const stageRect = stage.getBoundingClientRect();
+    const frameRect = frame.getBoundingClientRect();
+    const offsetX = frameRect.left - stageRect.left;
+    const offsetY = frameRect.top - stageRect.top;
+    return {
+      minX: -offsetX + 4,
+      minY: -offsetY + 4,
+      maxX: stageRect.width - offsetX - 4,
+      maxY: stageRect.height - offsetY - 4,
+    };
+  }
+
+  function coarsePointer() {
+    return window.matchMedia?.('(pointer: coarse)').matches ?? false;
+  }
+
+  function connector(from, to) {
+    const sx = 100 / display.w;
+    const sy = 100 / display.h;
+    const line = document.createElementNS(SVG_NS, 'line');
+    line.setAttribute('x1', from.x * sx);
+    line.setAttribute('y1', from.y * sy);
+    line.setAttribute('x2', to.x * sx);
+    line.setAttribute('y2', to.y * sy);
+    line.setAttribute('class', 'handle-line');
+    line.setAttribute('vector-effect', 'non-scaling-stroke');
+    svg.append(line);
+  }
+
+  function placeHandle(truePx, centerPx, dataset, extraClass = '') {
+    let { x, y } = truePx;
+    const touch = coarsePointer();
+    if (touch) {
+      [x, y] = auxPoint([truePx.x, truePx.y], [centerPx.x, centerPx.y], auxBox());
+      connector(truePx, { x, y });
+    }
+    const handle = document.createElement('div');
+    handle.className = `handle${touch ? ' touch' : ''}${extraClass ? ` ${extraClass}` : ''}`;
+    handle.style.left = `${x}px`;
+    handle.style.top = `${y}px`;
+    Object.assign(handle.dataset, dataset);
+    overlay.append(handle);
+  }
+
   function renderDeformSelection(shape) {
     const quad = quadOf(shape);
     const outline = document.createElementNS(SVG_NS, 'polygon');
@@ -101,18 +146,27 @@ export function createView({ stage, frame, img, svg, overlay }) {
     outline.setAttribute('class', 'sel-outline');
     svg.append(outline);
 
+    const centerPx = {
+      x: (quad.reduce((sum, [x]) => sum + x, 0) / quad.length) * display.w,
+      y: (quad.reduce((sum, [, y]) => sum + y, 0) / quad.length) * display.h,
+    };
     quad.forEach(([x, y], index) => {
-      const handle = document.createElement('div');
-      handle.className = 'handle corner';
-      handle.style.left = `${x * 100}%`;
-      handle.style.top = `${y * 100}%`;
-      handle.dataset.handle = `c${index}`;
-      overlay.append(handle);
+      placeHandle(
+        { x: x * display.w, y: y * display.h },
+        centerPx,
+        { handle: `c${index}` },
+        'corner',
+      );
     });
   }
 
   function renderSelection(shape) {
     if (!shape) return;
+    const left = shape.x * display.w;
+    const top = shape.y * display.h;
+    const right = (shape.x + shape.w) * display.w;
+    const bottom = (shape.y + shape.h) * display.h;
+
     const box = document.createElement('div');
     box.className = 'sel-box';
     box.style.left = `${shape.x * 100}%`;
@@ -121,15 +175,11 @@ export function createView({ stage, frame, img, svg, overlay }) {
     box.style.height = `${shape.h * 100}%`;
     overlay.append(box);
 
+    const centerPx = { x: (left + right) / 2, y: (top + bottom) / 2 };
     for (const dir of HANDLES) {
-      const handle = document.createElement('div');
-      handle.className = `handle handle-${dir}`;
-      const cx = dir.includes('w') ? shape.x : dir.includes('e') ? shape.x + shape.w : shape.x + shape.w / 2;
-      const cy = dir.includes('n') ? shape.y : dir.includes('s') ? shape.y + shape.h : shape.y + shape.h / 2;
-      handle.style.left = `${cx * 100}%`;
-      handle.style.top = `${cy * 100}%`;
-      handle.dataset.handle = dir;
-      overlay.append(handle);
+      const x = dir.includes('w') ? left : dir.includes('e') ? right : centerPx.x;
+      const y = dir.includes('n') ? top : dir.includes('s') ? bottom : centerPx.y;
+      placeHandle({ x, y }, centerPx, { handle: dir }, `handle-${dir}`);
     }
   }
 
