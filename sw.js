@@ -1,18 +1,18 @@
-const CACHE = 'blockmark-v1';
+const CACHE = 'blockmark-v2';
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.webmanifest',
-  '/src/styles.css',
-  '/src/main.js',
-  '/src/ui.js',
-  '/src/state.js',
-  '/src/shapes.js',
-  '/src/view.js',
-  '/src/gestures.js',
-  '/src/export.js',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
+  './',
+  './index.html',
+  './manifest.webmanifest',
+  './src/styles.css',
+  './src/main.js',
+  './src/ui.js',
+  './src/state.js',
+  './src/shapes.js',
+  './src/view.js',
+  './src/gestures.js',
+  './src/export.js',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
 ];
 
 self.addEventListener('install', (event) => {
@@ -39,6 +39,6 @@ self.addEventListener('fetch', (event) => {
         caches.open(CACHE).then((cache) => cache.put(request, copy)).catch(() => {});
         return response;
       })
-      .catch(() => caches.match(request).then((hit) => hit || caches.match('/index.html'))),
+      .catch(() => caches.match(request).then((hit) => hit || caches.match('./index.html'))),
   );
 });

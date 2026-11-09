@@ -45,7 +45,7 @@ const probe = await send('Runtime.evaluate', {
       out.swError = String(err);
     }
     try {
-      const res = await fetch('/manifest.webmanifest');
+      const res = await fetch('manifest.webmanifest');
       const json = await res.json();
       out.manifest = { status: res.status, icons: json.icons.length, name: json.name };
     } catch (err) {
