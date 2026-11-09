@@ -15,7 +15,7 @@
 ## 全局约定
 
 - 运行环境：Node 24（已装），无 `npm install`
-- 测试命令：`node --test tests/`
+- 测试命令：`node --test`
 - 本地预览：`node server.mjs . 4173` → http://localhost:4173
 - 截图核验：`& "C:\Program Files\Google\Chrome\Application\chrome.exe" --headless=new --disable-gpu --hide-scrollbars --virtual-time-budget=3000 --window-size=390,844 --screenshot="<输出路径>" "http://localhost:4173/<页面>"`
 - 颜色常量：`#FF3B30` `#0A84FF` `#34C759` `#FF9F0A` `#BF5AF2` `#FFFFFF`
@@ -194,7 +194,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test tests/",
+    "test": "node --test",
     "serve": "node server.mjs . 4173"
   }
 }
@@ -1233,9 +1233,10 @@ export function createView({ stage, frame, img, svg, overlay }) {
     return el;
   }
 
-  function renderBadges(shapes) {
+  function renderBadges(shapes, selectedId) {
     const r = 8.5;
     shapes.forEach((shape, index) => {
+      if (shape.id === selectedId) return;
       const el = document.createElement('span');
       el.className = 'badge';
       el.textContent = String(index + 1);
@@ -1276,7 +1277,7 @@ export function createView({ stage, frame, img, svg, overlay }) {
     const selected = state.shapes.find((s) => s.id === state.selectedId) || null;
     svg.replaceChildren(...state.shapes.map(shapeElement));
     overlay.replaceChildren();
-    renderBadges(state.shapes);
+    renderBadges(state.shapes, state.selectedId);
     renderSelection(selected);
   }
 
@@ -1542,12 +1543,15 @@ export function createUI({ store, els, onChooseImage, onExport }) {
 
   function render(state) {
     const selected = state.shapes.find((s) => s.id === state.selectedId) || null;
+    const index = selected ? state.shapes.indexOf(selected) + 1 : 0;
     count.textContent = `${state.shapes.length} 个标注`;
     undo.disabled = !store.canUndo();
     redo.disabled = !store.canRedo();
     del.disabled = !selected;
     exportBtn.disabled = !state.image || state.shapes.length === 0;
-    hint.textContent = selected ? '拖边单向拉伸 · 拖角自由变形' : '选中色块后可改色';
+    hint.textContent = selected
+      ? `${index} 号 · 拖边单向拉伸 · 拖角自由变形`
+      : '选中色块后可改色';
     palette.classList.toggle('disabled', !selected);
     for (const swatch of palette.children) {
       swatch.classList.toggle('active', !!selected && swatch.dataset.color === selected.color);
@@ -1596,7 +1600,13 @@ const els = {
 };
 
 const store = createStore();
-const view = createView(els);
+const view = createView({
+  stage: els.stage,
+  frame: els.frame,
+  img: els.photo,
+  svg: els.shapes,
+  overlay: els.overlay,
+});
 attachGestures({ stage: els.stage, frame: els.frame, svg: els.shapes, overlay: els.overlay, store });
 const ui = createUI({ store, els, onChooseImage: chooseImage, onExport: saveImage });
 
@@ -1675,7 +1685,7 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
 
 - [ ] **Step 3: 语法与测试**
 
-Run: `node --check src/ui.js; node --check src/main.js; node --test tests/`
+Run: `node --check src/ui.js; node --check src/main.js; node --test`
 Expected: 语法无输出；全部测试 PASS
 
 - [ ] **Step 4: 手工验证完整流程（桌面）**
@@ -1882,7 +1892,7 @@ node server.mjs . 4173
 ## 测试
 
 ```bash
-node --test tests/
+node --test
 ```
 
 ## 用法
@@ -1911,7 +1921,7 @@ node --test tests/
 
 - [ ] **Step 2: 跑全量测试**
 
-Run: `node --test tests/`
+Run: `node --test`
 Expected: 全部 PASS（约 30 个断言组）
 
 - [ ] **Step 3: 整体截图验收**
@@ -1937,7 +1947,7 @@ git commit -m "docs: README 与验收记录"
 
 ## 交付前的自查清单
 
-- [ ] `node --test tests/` 全绿
+- [ ] `node --test` 全绿
 - [ ] `node server.mjs . 4173` 能打开，空状态正常
 - [ ] 三种形状都能添加、移动、单向拉伸、自由变形
 - [ ] 删除中间色块后编号连续；撤销 20 步不出错
@@ -1945,6 +1955,24 @@ git commit -m "docs: README 与验收记录"
 - [ ] 超大图导出有降级提示
 - [ ] 手机真机走一遍全流程（用户执行）
 - [ ] PWA 在 localhost 下可离线、可安装
+
+---
+
+## 实施记录（已完成，2026-11-10）
+
+按本计划实施时对计划本身的修正，记录在此以免后来者踩同样的坑：
+
+1. **测试命令**：Node 24 在 Windows 上执行 `node --test tests/` 会把目录当模块解析而报错，实际用 `node --test`（自动发现 `tests/*.test.js`）。`package.json` 已同步。
+2. **视图装配**：计划里 `createView(els)` 会拿不到 `img` / `svg`（els 的键名是 `photo` / `shapes`），改为显式传 `{ stage, frame, img: els.photo, svg: els.shapes, overlay }`。
+3. **编号徽标**：选中色块的徽标会被左上角控制点盖住，改为「选中的色块不画徽标」，同时在底部提示里显示「N 号 · 拖边单向拉伸…」。
+4. **浮点尾差**：`resizeRect` 直接相减会得到 `0.30000000000000004`，几何输出统一按 1e-6 取整。
+5. **Service Worker** 改为网络优先（`fetch` 成功即回写缓存，失败才读缓存），避免开发时页面被旧缓存粘住。
+6. **新增开发辅助**（不属于产品功能）：
+   - `/?demo=1` 自动载入示例图并放好三个色块
+   - `window.__blockmark` 暴露 `store` / `view` / `exportPng()`
+   - `qa/visual-check.mjs` 用 CDP 回放真实指针事件（拖动、拉伸、撤销、导出）并截图
+   - `qa/pwa-check.mjs` 校验 SW 与 manifest
+7. **实测结果**：31 个单元测试全绿；CDP 回放中拖动 +30px/+40px → x +0.0769 / y +0.1368，东边拉伸 +25px → 宽度 +0.0641，撤销恢复原值；导出 1600×1200 PNG（206 KB）；SW 激活且缓存 13 个资源。
 
 ## 与设计文档的对应关系
 
@@ -1959,3 +1987,5 @@ git commit -m "docs: README 与验收记录"
 | §11 错误处理 | Task 8（toast/confirm）、Task 4（导出失败） |
 | §12 技术方案 | Task 1/5/6/7/9 |
 | §13 测试与验收 | 各 Task 的测试 + Task 10 |
+
+
