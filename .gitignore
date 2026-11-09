@@ -4,3 +4,5 @@ node_modules/
 qr-lan.png
 _start_test.cmd
 blockmark-site.zip
+dist/
+dist.zip

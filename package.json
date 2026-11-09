@@ -1,10 +1,11 @@
-﻿{
+{
   "name": "blockmark",
   "private": true,
   "type": "module",
   "scripts": {
     "test": "node --test",
-    "serve": "node server.mjs . 4173"
+    "serve": "node server.mjs . 4173",
+    "build": "node scripts/build.mjs"
   }
 }
 

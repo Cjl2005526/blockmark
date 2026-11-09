@@ -9,7 +9,7 @@ test('页面包含全部关键挂载点', () => {
     'stage', 'frame', 'photo', 'shapes', 'overlay', 'empty', 'toolbar',
     'count', 'palette', 'hint', 'btn-undo', 'btn-redo', 'btn-delete',
     'btn-export', 'btn-image', 'btn-pick', 'btn-camera', 'file', 'file-camera', 'toast',
-    'btn-deform', 'btn-reset',
+    'btn-deform', 'btn-reset', 'install-tip',
   ];
   for (const id of ids) assert.match(html, new RegExp(`id="${id}"`), `缺少 #${id}`);
 });

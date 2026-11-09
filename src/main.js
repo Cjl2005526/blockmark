@@ -119,6 +119,19 @@ window.addEventListener('beforeunload', (event) => {
   }
 });
 
+const standalone = window.matchMedia?.('(display-mode: standalone)').matches
+  || window.navigator.standalone === true;
+if (!standalone) {
+  const tip = document.getElementById('install-tip');
+  if (tip) {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    tip.textContent = isIOS
+      ? '想当 App 用：点底部「分享」→ 添加到主屏幕，之后断网也能用'
+      : '想当 App 用：浏览器菜单 → 安装应用 / 添加到主屏幕';
+    tip.hidden = false;
+  }
+}
+
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js').catch(() => {});

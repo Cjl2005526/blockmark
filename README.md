@@ -55,24 +55,43 @@ node server.mjs . 4173
 - 一次 3 个以内最稳；区域重叠时模型容易混淆
 - 变形过的色块照样能说"1 号"，编号位置跟着包围盒走
 
-## 放到网上（手机随时打开 + 断网可用）
+## 做成手机离线应用
 
-现在这种方式是「电脑当服务器」。想摆脱电脑、像网页一样随时打开，把这个文件夹传到任意**静态托管**就行（纯前端，没有后端、不用数据库）：
+这个项目本身就是 PWA：**上传到任意静态托管一次 → 手机上"添加到主屏幕" → 之后断网也能用**，不需要电脑、不需要服务器、不用上架应用商店。
+
+### 1. 生成发布包
+
+```bash
+npm run build
+```
+
+得到 `dist/`（只有 `index.html`、`src/`、`icons/`、`manifest.webmanifest`、`sw.js`，不含测试和文档）。
+
+### 2. 上传（选一个，免费）
 
 **最快：Netlify Drop**
 1. 打开 <https://app.netlify.com/drop>
-2. 把 `blockmark-site.zip` 解压后的文件夹（或整个项目目录）拖进网页
-3. 得到形如 `https://xxxx.netlify.app` 的地址，手机打开即可
+2. 把 **`dist` 文件夹**（或 `dist.zip`）拖进网页
+3. 拿到形如 `https://xxxx.netlify.app` 的地址
 
-**其它同类的**：Cloudflare Pages、Vercel、GitHub Pages、对象存储（OSS/COS）的静态网站模式 —— 都是「上传文件、不加构建命令、根目录即站点」这一套。因为资源全用相对路径，放在子目录（如 `example.github.io/blockmark/`）也能正常工作。
+其它：Cloudflare Pages、Vercel、GitHub Pages、对象存储静态网站 —— 都是"上传 `dist`、不加构建命令"。
 
-部署之后：
+因为资源全是相对路径，放在子目录（如 `example.github.io/blockmark/`）也能用。
 
-- 手机打开链接 → 分享 → **添加到主屏幕**，以后像 App 一样全屏打开
-- 首次打开后资源会被缓存，**断网也能用**（改图、导出都行）
-- 更新：重新上传一次即可，Service Worker 是网络优先，下次打开自动拿新版本
+### 3. 装到手机桌面
 
-> 离线只支持 HTTPS 或 localhost。局域网 `http://192.168.x.x` 只能在线用。
+- **iPhone**：Safari 打开地址 → 分享 → **添加到主屏幕**
+- **Android**：Chrome 打开地址 → 菜单 → **安装应用 / 添加到主屏幕**
+
+装完后从桌面图标进入：全屏、无地址栏；**第一次打开会缓存全部资源，之后断网照常标注和导出**。
+
+> 离线能力需要 HTTPS（Netlify/Vercel 等都自带）。局域网 `http://192.168.x.x` 只能在线用。
+
+### 想打成 APK / IPA？
+
+- **APK**：需要 Android SDK + JDK，本机没有；要么装 Android Studio 后用 Capacitor 打包，要么用 GitHub Actions 云构建
+- **IPA**：需要 macOS + Xcode 签名
+- 个人自用没必要上架，PWA 装到桌面体验已经和 App 基本一致
 
 ## 测试
 

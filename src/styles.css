@@ -129,6 +129,13 @@ button:disabled { opacity: 0.3; cursor: default; }
 .empty-sub { font-size: 13px; color: var(--muted); margin: 0 0 22px; }
 .empty .primary-btn { display: block; margin: 0 auto 8px; }
 .empty .ghost-btn { display: block; margin: 0 auto; }
+.empty-tip {
+  max-width: 270px;
+  margin: 20px auto 0;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--muted);
+}
 
 .spinner {
   position: absolute;
