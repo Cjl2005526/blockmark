@@ -1,0 +1,8 @@
+{
+  "appId": "com.blockmark.app",
+  "appName": "色块标注",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}

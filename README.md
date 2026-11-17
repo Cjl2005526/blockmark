@@ -87,11 +87,30 @@ npm run build
 
 > 离线能力需要 HTTPS（Netlify/Vercel 等都自带）。局域网 `http://192.168.x.x` 只能在线用。
 
-### 想打成 APK / IPA？
+### 打成 APK（GitHub Actions 云构建，不需要本机装 Android SDK）
 
-- **APK**：需要 Android SDK + JDK，本机没有；要么装 Android Studio 后用 Capacitor 打包，要么用 GitHub Actions 云构建
-- **IPA**：需要 macOS + Xcode 签名
-- 个人自用没必要上架，PWA 装到桌面体验已经和 App 基本一致
+仓库里已经配好 Capacitor 工程（`android/`）和 workflow（`.github/workflows/android.yml`），全程在 GitHub 的机器上编译：
+
+1. 在 GitHub 新建一个空仓库（Private 也可以），拿到地址
+2. 本地执行：
+
+   ```bash
+   git remote add origin https://github.com/<你的用户名>/<仓库名>.git
+   git branch -M main
+   git push -u origin main
+   ```
+
+3. 打开仓库 → **Actions** → 左侧选 **Build Android APK** → **Run workflow**
+4. 等 5～10 分钟（第一次要下载 Gradle 和依赖），在运行记录页底部下载 **blockmark-apk** 压缩包
+5. 解压得到 `app-debug.apk`，传到手机安装（Android 会提示允许「未知来源」）
+
+说明：
+
+- 这是 **debug 签名**，自己用完全没问题；要上架才需要 release keystore
+- 应用内「导出」会调用系统分享面板，选「保存到相册 / 文件」即可
+- 代码改了以后，重新 push 就会自动构建，也可以在 Actions 页手动触发
+
+**IPA**：需要 macOS + Xcode 签名，这条路在 Windows 上走不通。
 
 ## 测试
 

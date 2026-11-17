@@ -106,7 +106,47 @@ export async function exportPng(img, shapes) {
   return { blob, W, H, scaled };
 }
 
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
+    reader.onerror = () => reject(reader.error || new Error('read failed'));
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function saveInNativeApp(blob, filename) {
+  const capacitor = globalThis.Capacitor;
+  const plugins = capacitor?.Plugins;
+  if (!capacitor?.isNativePlatform?.() || !plugins?.Filesystem) return false;
+  try {
+    const data = await blobToBase64(blob);
+    const saved = await plugins.Filesystem.writeFile({
+      path: `blockmark/${filename}`,
+      data,
+      directory: 'CACHE',
+      recursive: true,
+    });
+    if (plugins.Share?.share) {
+      try {
+        await plugins.Share.share({
+          title: '标注图',
+          files: [saved.uri],
+          dialogTitle: '保存或分享标注图',
+        });
+      } catch {
+        await plugins.Share.share({ title: '标注图', url: saved.uri });
+      }
+    }
+    return true;
+  } catch (err) {
+    console.warn('native save failed', err);
+    return false;
+  }
+}
+
 export async function shareOrDownload(blob, filename) {
+  if (await saveInNativeApp(blob, filename)) return 'native';
   const file = new File([blob], filename, { type: blob.type || 'image/png' });
   if (navigator.canShare?.({ files: [file] })) {
     try {

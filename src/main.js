@@ -119,9 +119,10 @@ window.addEventListener('beforeunload', (event) => {
   }
 });
 
+const isNative = !!globalThis.Capacitor?.isNativePlatform?.();
 const standalone = window.matchMedia?.('(display-mode: standalone)').matches
   || window.navigator.standalone === true;
-if (!standalone) {
+if (!standalone && !isNative) {
   const tip = document.getElementById('install-tip');
   if (tip) {
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -132,7 +133,7 @@ if (!standalone) {
   }
 }
 
-if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+if (!isNative && 'serviceWorker' in navigator && location.protocol.startsWith('http')) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   });
